@@ -46,7 +46,18 @@ async function getTasks() {
         const response = await fetch(`${API_BASE}/deadlines`);
 
         if (!response.ok) {
-            throw new Error("Failed to fetch deadlines");
+            let message = "Could not load your deadlines.";
+
+            try {
+                const data = await response.json();
+                if (data.error) {
+                    message = data.error;
+                }
+            } catch (_) {
+                // Ignore JSON parsing errors
+            }
+
+            throw new Error(message);
         }
 
         state.tasks = await response.json();
@@ -54,7 +65,12 @@ async function getTasks() {
 
     } catch (error) {
         console.error("Error loading deadlines:", error);
-        showToast("Could not connect to the backend.");
+
+        if (error instanceof TypeError) {
+            showToast("Could not connect to the server. Please try again.");
+        } else {
+            showToast(error.message || "Could not load your deadlines.");
+        }
     }
 }
 
@@ -73,11 +89,21 @@ async function createTask(details) {
         });
 
         if (!response.ok) {
-            throw new Error("Failed to create deadline");
+            let message = "Could not save the deadline.";
+
+            try {
+                const data = await response.json();
+                if (data.error) {
+                    message = data.error;
+                }
+            } catch (_) {
+                // Ignore JSON parsing errors
+            }
+
+            throw new Error(message);
         }
 
         const task = await response.json();
-
         state.tasks.push(task);
 
         closeTaskDialog();
@@ -86,7 +112,12 @@ async function createTask(details) {
 
     } catch (error) {
         console.error("Error creating deadline:", error);
-        showToast("Could not save the deadline.");
+
+        if (error instanceof TypeError) {
+            showToast("Could not connect to the server. Please try again.");
+        } else {
+            showToast(error.message || "Could not save the deadline.");
+        }
     }
 }
 
@@ -105,7 +136,18 @@ async function updateTask(id, details, completed) {
         });
 
         if (!response.ok) {
-            throw new Error("Failed to update deadline");
+            let message = "Could not update the deadline.";
+
+            try {
+                const data = await response.json();
+                if (data.error) {
+                    message = data.error;
+                }
+            } catch (_) {
+                // Ignore JSON parsing errors
+            }
+
+            throw new Error(message);
         }
 
         const updatedTask = await response.json();
@@ -124,7 +166,12 @@ async function updateTask(id, details, completed) {
 
     } catch (error) {
         console.error("Error updating deadline:", error);
-        showToast("Could not update the deadline.");
+
+        if (error instanceof TypeError) {
+            showToast("Could not connect to the server. Please try again.");
+        } else {
+            showToast(error.message || "Could not update the deadline.");
+        }
     }
 }
 
@@ -136,7 +183,18 @@ async function deleteTask(id) {
         });
 
         if (!response.ok) {
-            throw new Error("Failed to delete deadline");
+            let message = "Could not delete the deadline.";
+
+            try {
+                const data = await response.json();
+                if (data.error) {
+                    message = data.error;
+                }
+            } catch (_) {
+                // Ignore JSON parsing errors
+            }
+
+            throw new Error(message);
         }
 
         state.tasks = state.tasks.filter(
@@ -148,7 +206,12 @@ async function deleteTask(id) {
 
     } catch (error) {
         console.error("Error deleting deadline:", error);
-        showToast("Could not delete the deadline.");
+
+        if (error instanceof TypeError) {
+            showToast("Could not connect to the server. Please try again.");
+        } else {
+            showToast(error.message || "Could not delete the deadline.");
+        }
     }
 }
 
