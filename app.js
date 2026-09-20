@@ -1097,30 +1097,60 @@ el.form.addEventListener(
                 el.notes.value.trim(),
         };
 
-        if (state.editingId) {
+        // Prevent duplicate submissions
+        const submitButton =
+            el.form.querySelector(
+                'button[type="submit"]'
+            );
 
-            const task =
-                state.tasks.find(
-                    (item) =>
-                        String(item.id) ===
-                        String(state.editingId)
+        if (submitButton.disabled) {
+            return;
+        }
+
+        submitButton.disabled = true;
+
+        const originalText =
+            el.saveText.textContent;
+
+        const originalIcon =
+            el.saveIcon.textContent;
+
+        el.saveText.textContent =
+            state.editingId
+                ? "Saving..."
+                : "Adding...";
+
+        el.saveIcon.textContent = "…";
+
+        try {
+            if (state.editingId) {
+                const task =
+                    state.tasks.find(
+                        (item) =>
+                            String(item.id) ===
+                            String(state.editingId)
+                    );
+
+                if (!task) {
+                    return;
+                }
+
+                await updateTask(
+                    state.editingId,
+                    details,
+                    task.completed
                 );
-
-            if (!task) {
-                return;
+            } else {
+                await createTask(details);
             }
+        } finally {
+            submitButton.disabled = false;
 
-            await updateTask(
-                state.editingId,
-                details,
-                task.completed
-            );
+            el.saveText.textContent =
+                originalText;
 
-        } else {
-
-            await createTask(
-                details
-            );
+            el.saveIcon.textContent =
+                originalIcon;
         }
     }
 );
