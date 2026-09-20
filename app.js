@@ -178,15 +178,21 @@ async function updateTask(id, details, completed) {
 
 async function deleteTask(id) {
     try {
-        const response = await fetch(`${API_BASE}/deadlines/${id}`, {
-            method: "DELETE",
-        });
+        const response = await fetch(
+            `${API_BASE}/deadlines/${id}`,
+            {
+                method: "DELETE",
+            }
+        );
 
         if (!response.ok) {
-            let message = "Could not delete the deadline.";
+            let message =
+                "Could not delete the deadline.";
 
             try {
-                const data = await response.json();
+                const data =
+                    await response.json();
+
                 if (data.error) {
                     message = data.error;
                 }
@@ -198,19 +204,34 @@ async function deleteTask(id) {
         }
 
         state.tasks = state.tasks.filter(
-            (task) => String(task.id) !== String(id)
+            (task) =>
+                String(task.id) !==
+                String(id)
         );
 
         render();
-        showToast("Deadline removed.");
+
+        showToast(
+            "Deadline removed."
+        );
 
     } catch (error) {
-        console.error("Error deleting deadline:", error);
+        console.error(
+            "Error deleting deadline:",
+            error
+        );
 
-        if (error instanceof TypeError) {
-            showToast("Could not connect to the server. Please try again.");
+        if (
+            error instanceof TypeError
+        ) {
+            showToast(
+                "Could not connect to the server. Please try again."
+            );
         } else {
-            showToast(error.message || "Could not delete the deadline.");
+            showToast(
+                error.message ||
+                "Could not delete the deadline."
+            );
         }
     }
 }
