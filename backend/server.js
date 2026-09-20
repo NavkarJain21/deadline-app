@@ -18,6 +18,7 @@ const pool = new Pool({
 app.use(cors({
     origin: "https://navkarjain21.github.io"
 }));
+
 app.use(express.json());
 
 // Root route
@@ -93,6 +94,12 @@ app.post("/api/deadlines", async (req, res) => {
             });
         }
 
+        if (!priority || !["high", "medium", "low"].includes(priority.toLowerCase())) {
+            return res.status(400).json({
+                error: "Priority must be high, medium, or low"
+            });
+        }
+
         const result = await pool.query(
             `
             INSERT INTO deadlines
@@ -109,10 +116,10 @@ app.post("/api/deadlines", async (req, res) => {
                 created_at
             `,
             [
-                title,
+                title.trim(),
                 date,
                 time || null,
-                priority || "medium",
+                priority.toLowerCase(),
                 notes || "",
                 completed || false
             ]
@@ -143,6 +150,18 @@ app.put("/api/deadlines/:id", async (req, res) => {
             completed
         } = req.body;
 
+        if (!title || !date) {
+            return res.status(400).json({
+                error: "Title and date are required"
+            });
+        }
+
+        if (!priority || !["high", "medium", "low"].includes(priority.toLowerCase())) {
+            return res.status(400).json({
+                error: "Priority must be high, medium, or low"
+            });
+        }
+
         const result = await pool.query(
             `
             UPDATE deadlines
@@ -165,10 +184,10 @@ app.put("/api/deadlines/:id", async (req, res) => {
                 created_at
             `,
             [
-                title,
+                title.trim(),
                 date,
                 time || null,
-                priority || "medium",
+                priority.toLowerCase(),
                 notes || "",
                 completed || false,
                 id
