@@ -15,7 +15,9 @@ const pool = new Pool({
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: "https://navkarjain21.github.io"
+}));
 app.use(express.json());
 
 // Root route
