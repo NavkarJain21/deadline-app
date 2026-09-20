@@ -94,9 +94,17 @@ app.post("/api/deadlines", async (req, res) => {
             });
         }
 
-        if (!priority || !["high", "medium", "low"].includes(priority.toLowerCase())) {
+        if (!["high", "medium", "low"].includes(priority?.toLowerCase())) {
             return res.status(400).json({
                 error: "Priority must be high, medium, or low"
+            });
+        }
+
+        const today = new Date().toISOString().split("T")[0];
+
+        if (date < today) {
+            return res.status(400).json({
+                error: "Deadline date cannot be in the past"
             });
         }
 
@@ -156,9 +164,17 @@ app.put("/api/deadlines/:id", async (req, res) => {
             });
         }
 
-        if (!priority || !["high", "medium", "low"].includes(priority.toLowerCase())) {
+        if (!["high", "medium", "low"].includes(priority?.toLowerCase())) {
             return res.status(400).json({
                 error: "Priority must be high, medium, or low"
+            });
+        }
+
+        const today = new Date().toISOString().split("T")[0];
+
+        if (date < today) {
+            return res.status(400).json({
+                error: "Deadline date cannot be in the past"
             });
         }
 
