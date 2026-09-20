@@ -5,14 +5,147 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#101425" />
     <title>Due Today — Deadline Tracker</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap"
+      rel="stylesheet"
+    />
+
     <link rel="stylesheet" href="styles.css" />
   </head>
+
   <body>
-    <main class="app-shell">
+
+    <!-- =========================
+         AUTH SCREEN
+    ========================== -->
+
+    <section class="auth-screen" id="authScreen">
+
+      <div class="auth-card">
+
+        <div class="auth-brand">
+          <span class="brand-mark">D</span>
+          <span>due<span>today</span></span>
+        </div>
+
+        <div class="auth-heading">
+          <p class="eyebrow" id="authEyebrow">WELCOME BACK</p>
+          <h1 id="authTitle">Sign in to Due Today</h1>
+          <p id="authSubtitle">
+            Keep your deadlines organized and available wherever you go.
+          </p>
+        </div>
+
+        <!-- LOGIN -->
+
+        <form id="loginForm" class="auth-form">
+
+          <label class="form-field">
+            <span>Email</span>
+            <input
+              id="loginEmail"
+              type="email"
+              autocomplete="email"
+              required
+              placeholder="you@example.com"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Password</span>
+            <input
+              id="loginPassword"
+              type="password"
+              autocomplete="current-password"
+              required
+              placeholder="Enter your password"
+            />
+          </label>
+
+          <button class="save-button auth-submit" type="submit">
+            <span id="loginButtonText">Sign in</span>
+          </button>
+
+          <p class="auth-error" id="loginError"></p>
+
+          <p class="auth-switch">
+            Don't have an account?
+            <button type="button" id="showRegister">
+              Create one
+            </button>
+          </p>
+
+        </form>
+
+        <!-- REGISTER -->
+
+        <form id="registerForm" class="auth-form" hidden>
+
+          <label class="form-field">
+            <span>Name</span>
+            <input
+              id="registerName"
+              type="text"
+              autocomplete="name"
+              required
+              placeholder="Your name"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Email</span>
+            <input
+              id="registerEmail"
+              type="email"
+              autocomplete="email"
+              required
+              placeholder="you@example.com"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Password</span>
+            <input
+              id="registerPassword"
+              type="password"
+              autocomplete="new-password"
+              minlength="6"
+              required
+              placeholder="At least 6 characters"
+            />
+          </label>
+
+          <button class="save-button auth-submit" type="submit">
+            <span id="registerButtonText">Create account</span>
+          </button>
+
+          <p class="auth-error" id="registerError"></p>
+
+          <p class="auth-switch">
+            Already have an account?
+            <button type="button" id="showLogin">
+              Sign in
+            </button>
+          </p>
+
+        </form>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         MAIN APP
+    ========================== -->
+
+    <main class="app-shell" id="appShell" hidden>
+
       <aside class="sidebar">
+
         <a class="brand" href="#top" aria-label="Due Today home">
           <span class="brand-mark">D</span>
           <span>due<span>today</span></span>
@@ -24,124 +157,491 @@
         </button>
 
         <nav class="filters" aria-label="Deadline filters">
-          <button class="filter active" data-filter="all" type="button"><span class="filter-icon">□</span> All deadlines <b id="allCount">0</b></button>
-          <button class="filter" data-filter="today" type="button"><span class="filter-icon">◒</span> Today <b id="todayCount">0</b></button>
-          <button class="filter" data-filter="upcoming" type="button"><span class="filter-icon">↗</span> Next 7 days <b id="upcomingCount">0</b></button>
-          <button class="filter" data-filter="overdue" type="button"><span class="filter-icon">!</span> Overdue <b id="overdueCount">0</b></button>
-          <button class="filter" data-filter="completed" type="button"><span class="filter-icon">✓</span> Completed <b id="completedCount">0</b></button>
+
+          <button class="filter active" data-filter="all" type="button">
+            <span class="filter-icon">□</span>
+            All deadlines
+            <b id="allCount">0</b>
+          </button>
+
+          <button class="filter" data-filter="today" type="button">
+            <span class="filter-icon">◒</span>
+            Today
+            <b id="todayCount">0</b>
+          </button>
+
+          <button class="filter" data-filter="upcoming" type="button">
+            <span class="filter-icon">↗</span>
+            Next 7 days
+            <b id="upcomingCount">0</b>
+          </button>
+
+          <button class="filter" data-filter="overdue" type="button">
+            <span class="filter-icon">!</span>
+            Overdue
+            <b id="overdueCount">0</b>
+          </button>
+
+          <button class="filter" data-filter="completed" type="button">
+            <span class="filter-icon">✓</span>
+            Completed
+            <b id="completedCount">0</b>
+          </button>
+
         </nav>
 
         <div class="sidebar-bottom">
+
           <div class="focus-card">
             <span class="eyebrow">YOUR FOCUS</span>
             <strong id="focusMetric">0 deadlines</strong>
             <p id="focusCopy">Nothing urgent right now.</p>
-            <div class="progress-track"><span id="focusProgress"></span></div>
+            <div class="progress-track">
+              <span id="focusProgress"></span>
+            </div>
           </div>
-          <p class="storage-note">Saved privately in this browser</p>
+
+          <p class="storage-note">
+            Your deadlines are saved securely to your account
+          </p>
+
         </div>
+
       </aside>
 
+
       <section class="content" id="top">
+
         <header class="topbar">
+
           <div>
             <p class="date-label" id="dateLabel"></p>
             <h1 id="viewTitle">All deadlines</h1>
           </div>
+
           <div class="topbar-actions">
+
             <label class="search" aria-label="Search deadlines">
-              <span>⌕</span><input id="searchInput" type="search" placeholder="Search" autocomplete="off" />
+              <span>⌕</span>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Search"
+                autocomplete="off"
+              />
               <kbd>/</kbd>
             </label>
-            <button class="avatar" type="button" aria-label="Account menu">AR</button>
+
+            <div class="account-area">
+
+              <button
+                class="avatar"
+                id="accountButton"
+                type="button"
+                aria-label="Account menu"
+              >
+                U
+              </button>
+
+              <div
+                class="account-menu"
+                id="accountMenu"
+                hidden
+              >
+                <div class="account-info">
+                  <strong id="accountName">User</strong>
+                  <span id="accountEmail">email@example.com</span>
+                </div>
+
+                <button
+                  id="logoutButton"
+                  type="button"
+                >
+                  Log out
+                </button>
+              </div>
+
+            </div>
+
           </div>
+
         </header>
 
+
         <section class="stats" aria-label="Deadline overview">
+
           <article class="stat-card priority-card">
-            <div><span class="eyebrow">DUE TODAY</span><strong id="todayStat">0</strong></div>
+            <div>
+              <span class="eyebrow">DUE TODAY</span>
+              <strong id="todayStat">0</strong>
+            </div>
+
             <span class="stat-symbol">◒</span>
-            <p id="todayStatCopy">A clear calendar.</p>
+
+            <p id="todayStatCopy">
+              A clear calendar.
+            </p>
           </article>
+
+
           <article class="stat-card">
-            <div><span class="eyebrow">UP NEXT</span><strong id="nextStat">—</strong></div>
+
+            <div>
+              <span class="eyebrow">UP NEXT</span>
+              <strong id="nextStat">—</strong>
+            </div>
+
             <span class="stat-symbol orange">↗</span>
-            <p id="nextStatCopy">No upcoming deadline</p>
+
+            <p id="nextStatCopy">
+              No upcoming deadline
+            </p>
+
           </article>
+
+
           <article class="stat-card">
-            <div><span class="eyebrow">COMPLETED</span><strong id="doneStat">0%</strong></div>
+
+            <div>
+              <span class="eyebrow">COMPLETED</span>
+              <strong id="doneStat">0%</strong>
+            </div>
+
             <span class="stat-symbol mint">✓</span>
-            <p id="doneStatCopy">Keep the momentum going</p>
+
+            <p id="doneStatCopy">
+              Keep the momentum going
+            </p>
+
           </article>
+
         </section>
+
 
         <section class="task-area">
+
           <div class="list-toolbar">
-            <p id="listSummary">Your deadlines, ordered by what needs attention first.</p>
-            <button class="sort-button" id="sortButton" type="button">Sort: <span>Urgency</span> <i>⌄</i></button>
-            <div class="sort-menu" id="sortMenu" hidden>
-              <button data-sort="urgency" class="selected" type="button">Urgency</button>
-              <button data-sort="date" type="button">Due date</button>
-              <button data-sort="priority" type="button">Priority</button>
+
+            <p id="listSummary">
+              Your deadlines, ordered by what needs attention first.
+            </p>
+
+            <button
+              class="sort-button"
+              id="sortButton"
+              type="button"
+            >
+              Sort:
+              <span>Urgency</span>
+              <i>⌄</i>
+            </button>
+
+            <div
+              class="sort-menu"
+              id="sortMenu"
+              hidden
+            >
+              <button
+                data-sort="urgency"
+                class="selected"
+                type="button"
+              >
+                Urgency
+              </button>
+
+              <button
+                data-sort="date"
+                type="button"
+              >
+                Due date
+              </button>
+
+              <button
+                data-sort="priority"
+                type="button"
+              >
+                Priority
+              </button>
             </div>
+
           </div>
-          <div class="task-list" id="taskList" aria-live="polite"></div>
-          <section class="empty-state" id="emptyState" hidden>
+
+
+          <div
+            class="task-list"
+            id="taskList"
+            aria-live="polite"
+          ></div>
+
+
+          <section
+            class="empty-state"
+            id="emptyState"
+            hidden
+          >
+
             <div class="empty-orbit">✦</div>
+
             <h2>Nothing here yet</h2>
-            <p>Add a deadline to make this space useful.</p>
-            <button class="text-button" id="emptyAddButton" type="button">Add a deadline →</button>
+
+            <p>
+              Add a deadline to make this space useful.
+            </p>
+
+            <button
+              class="text-button"
+              id="emptyAddButton"
+              type="button"
+            >
+              Add a deadline →
+            </button>
+
           </section>
+
         </section>
+
       </section>
+
     </main>
 
-    <dialog class="task-dialog" id="taskDialog" aria-labelledby="dialogTitle">
+
+    <!-- =========================
+         DEADLINE DIALOG
+    ========================== -->
+
+    <dialog
+      class="task-dialog"
+      id="taskDialog"
+      aria-labelledby="dialogTitle"
+    >
+
       <form id="taskForm" method="dialog">
+
         <div class="dialog-head">
+
           <div>
-            <p class="eyebrow" id="dialogEyebrow">PLAN AHEAD</p>
-            <h2 id="dialogTitle">New deadline</h2>
+            <p
+              class="eyebrow"
+              id="dialogEyebrow"
+            >
+              PLAN AHEAD
+            </p>
+
+            <h2 id="dialogTitle">
+              New deadline
+            </h2>
           </div>
-          <button class="icon-button" id="closeDialog" type="button" aria-label="Close">×</button>
+
+          <button
+            class="icon-button"
+            id="closeDialog"
+            type="button"
+            aria-label="Close"
+          >
+            ×
+          </button>
+
         </div>
-        <label class="form-field task-name"><span>What needs to get done?</span><input id="taskTitle" name="title" maxlength="80" required placeholder="e.g. Send draft to Maya" autocomplete="off" /></label>
-        <div class="form-grid">
-          <label class="form-field"><span>Due date</span><input id="taskDate" name="date" type="date" required /></label>
-          <label class="form-field"><span>Time <em>optional</em></span><input id="taskTime" name="time" type="time" /></label>
-        </div>
-        <label class="form-field"><span>Priority</span>
-          <select id="taskPriority" name="priority">
-            <option value="high">High — needs attention</option>
-            <option value="medium" selected>Medium — important</option>
-            <option value="low">Low — when there’s room</option>
-          </select>
+
+
+        <label class="form-field task-name">
+
+          <span>
+            What needs to get done?
+          </span>
+
+          <input
+            id="taskTitle"
+            name="title"
+            maxlength="80"
+            required
+            placeholder="e.g. Send draft to Maya"
+            autocomplete="off"
+          />
+
         </label>
-        <label class="form-field"><span>Notes <em>optional</em></span><textarea id="taskNotes" name="notes" maxlength="180" placeholder="Add a little context…"></textarea></label>
-        <div class="dialog-actions">
-          <button class="cancel-button" id="cancelDialog" type="button">Cancel</button>
-          <button class="save-button" type="submit"><span id="saveIcon">+</span> <span id="saveText">Add deadline</span></button>
+
+
+        <div class="form-grid">
+
+          <label class="form-field">
+
+            <span>Due date</span>
+
+            <input
+              id="taskDate"
+              name="date"
+              type="date"
+              required
+            />
+
+          </label>
+
+
+          <label class="form-field">
+
+            <span>
+              Time <em>optional</em>
+            </span>
+
+            <input
+              id="taskTime"
+              name="time"
+              type="time"
+            />
+
+          </label>
+
         </div>
+
+
+        <label class="form-field">
+
+          <span>Priority</span>
+
+          <select
+            id="taskPriority"
+            name="priority"
+          >
+
+            <option value="high">
+              High — needs attention
+            </option>
+
+            <option
+              value="medium"
+              selected
+            >
+              Medium — important
+            </option>
+
+            <option value="low">
+              Low — when there’s room
+            </option>
+
+          </select>
+
+        </label>
+
+
+        <label class="form-field">
+
+          <span>
+            Notes <em>optional</em>
+          </span>
+
+          <textarea
+            id="taskNotes"
+            name="notes"
+            maxlength="180"
+            placeholder="Add a little context…"
+          ></textarea>
+
+        </label>
+
+
+        <div class="dialog-actions">
+
+          <button
+            class="cancel-button"
+            id="cancelDialog"
+            type="button"
+          >
+            Cancel
+          </button>
+
+          <button
+            class="save-button"
+            type="submit"
+          >
+
+            <span id="saveIcon">+</span>
+
+            <span id="saveText">
+              Add deadline
+            </span>
+
+          </button>
+
+        </div>
+
       </form>
+
     </dialog>
 
+
+    <!-- =========================
+         TASK TEMPLATE
+    ========================== -->
+
     <template id="taskTemplate">
+
       <article class="task-card">
-        <button class="complete-toggle" type="button" aria-label="Mark complete"></button>
+
+        <button
+          class="complete-toggle"
+          type="button"
+          aria-label="Mark complete"
+        ></button>
+
         <div class="priority-bar"></div>
+
         <div class="task-main">
-          <div class="task-title-row"><h2></h2><span class="priority-pill"></span></div>
+
+          <div class="task-title-row">
+
+            <h2></h2>
+
+            <span class="priority-pill"></span>
+
+          </div>
+
           <p class="task-notes"></p>
-          <div class="task-meta"><span class="due-label"></span><span class="time-label"></span></div>
+
+          <div class="task-meta">
+
+            <span class="due-label"></span>
+
+            <span class="time-label"></span>
+
+          </div>
+
         </div>
+
+
         <div class="task-actions">
-          <button class="edit-task" type="button" aria-label="Edit deadline">Edit</button>
-          <button class="delete-task" type="button" aria-label="Delete deadline">×</button>
+
+          <button
+            class="edit-task"
+            type="button"
+            aria-label="Edit deadline"
+          >
+            Edit
+          </button>
+
+          <button
+            class="delete-task"
+            type="button"
+            aria-label="Delete deadline"
+          >
+            ×
+          </button>
+
         </div>
+
       </article>
+
     </template>
 
-    <div class="toast" id="toast" role="status"></div>
+
+    <div
+      class="toast"
+      id="toast"
+      role="status"
+    ></div>
+
+
     <script src="app.js"></script>
+
   </body>
 </html>

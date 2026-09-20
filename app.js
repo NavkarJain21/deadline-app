@@ -1,5 +1,48 @@
 const API_BASE = "https://deadline-app.onrender.com/api";
 
+// =========================
+// AUTHENTICATION
+// =========================
+
+const AUTH_TOKEN_KEY = "deadline_app_token";
+const AUTH_USER_KEY = "deadline_app_user";
+
+let currentUser = JSON.parse(
+    localStorage.getItem(AUTH_USER_KEY) || "null"
+);
+
+function getAuthToken() {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+function saveAuth(token, user) {
+    localStorage.setItem(AUTH_TOKEN_KEY, token);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+    currentUser = user;
+}
+
+function clearAuth() {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_USER_KEY);
+    currentUser = null;
+}
+
+function authHeaders(includeJson = false) {
+    const token = getAuthToken();
+    const headers = {};
+
+    if (includeJson) {
+        headers["Content-Type"] = "application/json";
+    }
+
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    return headers;
+}
+
+
 const state = {
     tasks: [],
     filter: "all",
@@ -7,6 +50,7 @@ const state = {
     sort: "urgency",
     editingId: null,
 };
+
 
 const el = {
     taskList: document.querySelector("#taskList"),
@@ -43,13 +87,21 @@ const el = {
 
 async function getTasks() {
     try {
-        const response = await fetch(`${API_BASE}/deadlines`);
+        const response = await fetch(
+            `${API_BASE}/deadlines`,
+            {
+                headers: authHeaders()
+            }
+        );
+
+        await handleAuthResponse(response);
 
         if (!response.ok) {
             let message = "Could not load your deadlines.";
 
             try {
                 const data = await response.json();
+
                 if (data.error) {
                     message = data.error;
                 }
@@ -61,15 +113,24 @@ async function getTasks() {
         }
 
         state.tasks = await response.json();
+
         render();
 
     } catch (error) {
-        console.error("Error loading deadlines:", error);
+        console.error(
+            "Error loading deadlines:",
+            error
+        );
 
         if (error instanceof TypeError) {
-            showToast("Could not connect to the server. Please try again.");
+            showToast(
+                "Could not connect to the server. Please try again."
+            );
         } else {
-            showToast(error.message || "Could not load your deadlines.");
+            showToast(
+                error.message ||
+                "Could not load your deadlines."
+            );
         }
     }
 }
@@ -77,22 +138,30 @@ async function getTasks() {
 
 async function createTask(details) {
     try {
-        const response = await fetch(`${API_BASE}/deadlines`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                ...details,
-                completed: false,
-            }),
-        });
+        const response = await fetch(
+            `${API_BASE}/deadlines`,
+            {
+                method: "POST",
+
+                headers: authHeaders(true),
+
+                body: JSON.stringify({
+                    ...details,
+                    completed: false,
+                }),
+            }
+        );
+
+        await handleAuthResponse(response);
 
         if (!response.ok) {
-            let message = "Could not save the deadline.";
+            let message =
+                "Could not save the deadline.";
 
             try {
-                const data = await response.json();
+                const data =
+                    await response.json();
+
                 if (data.error) {
                     message = data.error;
                 }
@@ -103,43 +172,69 @@ async function createTask(details) {
             throw new Error(message);
         }
 
-        const task = await response.json();
+        const task =
+            await response.json();
+
         state.tasks.push(task);
 
         closeTaskDialog();
+
         render();
-        showToast("Deadline added to your list.");
+
+        showToast(
+            "Deadline added to your list."
+        );
 
     } catch (error) {
-        console.error("Error creating deadline:", error);
+        console.error(
+            "Error creating deadline:",
+            error
+        );
 
         if (error instanceof TypeError) {
-            showToast("Could not connect to the server. Please try again.");
+            showToast(
+                "Could not connect to the server. Please try again."
+            );
         } else {
-            showToast(error.message || "Could not save the deadline.");
+            showToast(
+                error.message ||
+                "Could not save the deadline."
+            );
         }
     }
 }
 
 
-async function updateTask(id, details, completed) {
+async function updateTask(
+    id,
+    details,
+    completed
+) {
     try {
-        const response = await fetch(`${API_BASE}/deadlines/${id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                ...details,
-                completed,
-            }),
-        });
+        const response = await fetch(
+            `${API_BASE}/deadlines/${id}`,
+            {
+                method: "PUT",
+
+                headers: authHeaders(true),
+
+                body: JSON.stringify({
+                    ...details,
+                    completed,
+                }),
+            }
+        );
+
+        await handleAuthResponse(response);
 
         if (!response.ok) {
-            let message = "Could not update the deadline.";
+            let message =
+                "Could not update the deadline.";
 
             try {
-                const data = await response.json();
+                const data =
+                    await response.json();
+
                 if (data.error) {
                     message = data.error;
                 }
@@ -150,27 +245,44 @@ async function updateTask(id, details, completed) {
             throw new Error(message);
         }
 
-        const updatedTask = await response.json();
+        const updatedTask =
+            await response.json();
 
-        const index = state.tasks.findIndex(
-            (task) => String(task.id) === String(id)
-        );
+        const index =
+            state.tasks.findIndex(
+                (task) =>
+                    String(task.id) ===
+                    String(id)
+            );
 
         if (index !== -1) {
-            state.tasks[index] = updatedTask;
+            state.tasks[index] =
+                updatedTask;
         }
 
         closeTaskDialog();
+
         render();
-        showToast("Deadline updated.");
+
+        showToast(
+            "Deadline updated."
+        );
 
     } catch (error) {
-        console.error("Error updating deadline:", error);
+        console.error(
+            "Error updating deadline:",
+            error
+        );
 
         if (error instanceof TypeError) {
-            showToast("Could not connect to the server. Please try again.");
+            showToast(
+                "Could not connect to the server. Please try again."
+            );
         } else {
-            showToast(error.message || "Could not update the deadline.");
+            showToast(
+                error.message ||
+                "Could not update the deadline."
+            );
         }
     }
 }
@@ -182,8 +294,11 @@ async function deleteTask(id) {
             `${API_BASE}/deadlines/${id}`,
             {
                 method: "DELETE",
+                headers: authHeaders(),
             }
         );
+
+        await handleAuthResponse(response);
 
         if (!response.ok) {
             let message =
@@ -203,11 +318,12 @@ async function deleteTask(id) {
             throw new Error(message);
         }
 
-        state.tasks = state.tasks.filter(
-            (task) =>
-                String(task.id) !==
-                String(id)
-        );
+        state.tasks =
+            state.tasks.filter(
+                (task) =>
+                    String(task.id) !==
+                    String(id)
+            );
 
         render();
 
@@ -241,26 +357,37 @@ async function deleteTask(id) {
 // DATE FUNCTIONS
 // =========================
 
-function localDate(date = new Date()) {
+function localDate(
+    date = new Date()
+) {
     const copy = new Date(date);
 
     copy.setMinutes(
-        copy.getMinutes() - copy.getTimezoneOffset()
+        copy.getMinutes() -
+        copy.getTimezoneOffset()
     );
 
-    return copy.toISOString().slice(0, 10);
+    return copy
+        .toISOString()
+        .slice(0, 10);
 }
 
 
 function startOfToday() {
-    return new Date(`${localDate()}T00:00:00`);
+    return new Date(
+        `${localDate()}T00:00:00`
+    );
 }
 
 
-function dayDifference(dateString) {
+function dayDifference(
+    dateString
+) {
     return Math.round(
         (
-            new Date(`${dateString}T00:00:00`) -
+            new Date(
+                `${dateString}T00:00:00`
+            ) -
             startOfToday()
         ) / 86400000
     );
@@ -288,13 +415,20 @@ function priorityRank(priority) {
 // =========================
 
 function visibleTasks() {
-    const term = state.search.trim().toLowerCase();
+    const term =
+        state.search
+            .trim()
+            .toLowerCase();
 
     return state.tasks
+
         .filter((task) => {
-            const days = dayDifference(task.date);
+
+            const days =
+                dayDifference(task.date);
 
             const matchesFilter = {
+
                 all: true,
 
                 today:
@@ -321,44 +455,73 @@ function visibleTasks() {
                     .toLowerCase()
                     .includes(term);
 
-            return matchesFilter && matchesSearch;
+            return (
+                matchesFilter &&
+                matchesSearch
+            );
         })
+
         .sort((a, b) => {
 
             if (state.sort === "date") {
-                return taskDate(a) - taskDate(b);
-            }
-
-            if (state.sort === "priority") {
                 return (
-                    priorityRank(a.priority) -
-                    priorityRank(b.priority)
-                ) || (
-                    taskDate(a) - taskDate(b)
+                    taskDate(a) -
+                    taskDate(b)
                 );
             }
 
-            if (a.completed !== b.completed) {
-                return Number(a.completed) - Number(b.completed);
+            if (
+                state.sort === "priority"
+            ) {
+                return (
+                    priorityRank(
+                        a.priority
+                    ) -
+                    priorityRank(
+                        b.priority
+                    )
+                ) || (
+                    taskDate(a) -
+                    taskDate(b)
+                );
+            }
+
+            if (
+                a.completed !==
+                b.completed
+            ) {
+                return (
+                    Number(a.completed) -
+                    Number(b.completed)
+                );
             }
 
             const aStatus =
                 dayDifference(a.date) < 0
                     ? -10
-                    : dayDifference(a.date);
+                    : dayDifference(
+                        a.date
+                    );
 
             const bStatus =
                 dayDifference(b.date) < 0
                     ? -10
-                    : dayDifference(b.date);
+                    : dayDifference(
+                        b.date
+                    );
 
             return (
                 aStatus - bStatus
             ) || (
-                priorityRank(a.priority) -
-                priorityRank(b.priority)
+                priorityRank(
+                    a.priority
+                ) -
+                priorityRank(
+                    b.priority
+                )
             ) || (
-                taskDate(a) - taskDate(b)
+                taskDate(a) -
+                taskDate(b)
             );
         });
 }
@@ -369,7 +532,8 @@ function visibleTasks() {
 // =========================
 
 function dueText(task) {
-    const days = dayDifference(task.date);
+    const days =
+        dayDifference(task.date);
 
     if (days === 0) {
         return {
@@ -387,7 +551,8 @@ function dueText(task) {
 
     if (days < 0) {
         return {
-            label: `${Math.abs(days)} days overdue`,
+            label:
+                `${Math.abs(days)} days overdue`,
             className: "overdue",
         };
     }
@@ -401,21 +566,26 @@ function dueText(task) {
 
     if (days < 7) {
         return {
-            label: `Due in ${days} days`,
+            label:
+                `Due in ${days} days`,
             className: "soon",
         };
     }
 
-    const date = new Date(`${task.date}T12:00:00`);
+    const date =
+        new Date(
+            `${task.date}T12:00:00`
+        );
 
     return {
-        label: `Due ${date.toLocaleDateString(
-            undefined,
-            {
-                month: "short",
-                day: "numeric",
-            }
-        )}`,
+        label:
+            `Due ${date.toLocaleDateString(
+                undefined,
+                {
+                    month: "short",
+                    day: "numeric",
+                }
+            )}`,
         className: "",
     };
 }
@@ -429,10 +599,13 @@ function timeText(time) {
     return new Date(
         `1970-01-01T${time}:00`
     )
-        .toLocaleTimeString([], {
-            hour: "numeric",
-            minute: "2-digit",
-        })
+        .toLocaleTimeString(
+            [],
+            {
+                hour: "numeric",
+                minute: "2-digit",
+            }
+        )
         .toLowerCase();
 }
 
@@ -450,35 +623,53 @@ function count(tasks) {
 
 function renderTask(task) {
     const fragment =
-        el.template.content.cloneNode(true);
+        el.template.content.cloneNode(
+            true
+        );
 
     const card =
-        fragment.querySelector(".task-card");
+        fragment.querySelector(
+            ".task-card"
+        );
 
     const complete =
-        fragment.querySelector(".complete-toggle");
+        fragment.querySelector(
+            ".complete-toggle"
+        );
 
     const title =
         fragment.querySelector("h2");
 
     const notes =
-        fragment.querySelector(".task-notes");
+        fragment.querySelector(
+            ".task-notes"
+        );
 
     const priority =
-        fragment.querySelector(".priority-pill");
+        fragment.querySelector(
+            ".priority-pill"
+        );
 
     const bar =
-        fragment.querySelector(".priority-bar");
+        fragment.querySelector(
+            ".priority-bar"
+        );
 
     const due =
-        fragment.querySelector(".due-label");
+        fragment.querySelector(
+            ".due-label"
+        );
 
     const time =
-        fragment.querySelector(".time-label");
+        fragment.querySelector(
+            ".time-label"
+        );
 
-    const dueInfo = dueText(task);
+    const dueInfo =
+        dueText(task);
 
-    card.dataset.id = task.id;
+    card.dataset.id =
+        task.id;
 
     card.classList.toggle(
         "completed",
@@ -492,7 +683,8 @@ function renderTask(task) {
             : "Mark complete"
     );
 
-    title.textContent = task.title;
+    title.textContent =
+        task.title;
 
     notes.textContent =
         task.notes || "";
@@ -525,21 +717,24 @@ function renderTask(task) {
 
     complete.addEventListener(
         "click",
-        () => toggleTask(task.id)
+        () =>
+            toggleTask(task.id)
     );
 
     fragment
         .querySelector(".edit-task")
         .addEventListener(
             "click",
-            () => openTaskDialog(task)
+            () =>
+                openTaskDialog(task)
         );
 
     fragment
         .querySelector(".delete-task")
         .addEventListener(
             "click",
-            () => removeTask(task.id)
+            () =>
+                removeTask(task.id)
         );
 
     return fragment;
@@ -551,7 +746,8 @@ function renderTask(task) {
 // =========================
 
 function render() {
-    const tasks = visibleTasks();
+    const tasks =
+        visibleTasks();
 
     el.taskList.replaceChildren(
         ...tasks.map(renderTask)
@@ -572,6 +768,7 @@ function render() {
         names[state.filter];
 
     const descriptions = {
+
         all:
             "Your deadlines, ordered by what needs attention first.",
 
@@ -591,21 +788,25 @@ function render() {
     el.listSummary.textContent =
         state.search
             ? `Results for “${state.search}”`
-            : descriptions[state.filter];
+            : descriptions[
+                state.filter
+            ];
 
     document
         .querySelectorAll(".filter")
         .forEach((button) => {
+
             button.classList.toggle(
                 "active",
                 button.dataset.filter ===
-                    state.filter
+                state.filter
             );
         });
 
     document.querySelector(
         "#allCount"
-    ).textContent = count(state.tasks);
+    ).textContent =
+        count(state.tasks);
 
     document.querySelector(
         "#todayCount"
@@ -613,7 +814,9 @@ function render() {
         state.tasks.filter(
             (task) =>
                 !task.completed &&
-                dayDifference(task.date) === 0
+                dayDifference(
+                    task.date
+                ) === 0
         ).length;
 
     document.querySelector(
@@ -622,8 +825,12 @@ function render() {
         state.tasks.filter(
             (task) =>
                 !task.completed &&
-                dayDifference(task.date) > 0 &&
-                dayDifference(task.date) <= 7
+                dayDifference(
+                    task.date
+                ) > 0 &&
+                dayDifference(
+                    task.date
+                ) <= 7
         ).length;
 
     document.querySelector(
@@ -632,14 +839,17 @@ function render() {
         state.tasks.filter(
             (task) =>
                 !task.completed &&
-                dayDifference(task.date) < 0
+                dayDifference(
+                    task.date
+                ) < 0
         ).length;
 
     document.querySelector(
         "#completedCount"
     ).textContent =
         state.tasks.filter(
-            (task) => task.completed
+            (task) =>
+                task.completed
         ).length;
 
     renderOverview();
@@ -653,20 +863,25 @@ function render() {
 function renderOverview() {
     const open =
         state.tasks.filter(
-            (task) => !task.completed
+            (task) =>
+                !task.completed
         );
 
     const today =
         open.filter(
             (task) =>
-                dayDifference(task.date) === 0
+                dayDifference(
+                    task.date
+                ) === 0
         );
 
     const next =
         open
             .filter(
                 (task) =>
-                    dayDifference(task.date) >= 0
+                    dayDifference(
+                        task.date
+                    ) >= 0
             )
             .sort(
                 (a, b) =>
@@ -676,36 +891,42 @@ function renderOverview() {
 
     const completed =
         state.tasks.filter(
-            (task) => task.completed
+            (task) =>
+                task.completed
         ).length;
 
     const percentage =
         state.tasks.length
             ? Math.round(
-                (completed /
-                    state.tasks.length) *
-                    100
+                (
+                    completed /
+                    state.tasks.length
+                ) * 100
             )
             : 0;
 
     const late =
         open.filter(
             (task) =>
-                dayDifference(task.date) < 0
+                dayDifference(
+                    task.date
+                ) < 0
         );
 
     document.querySelector(
         "#todayStat"
-    ).textContent = today.length;
+    ).textContent =
+        today.length;
 
     document.querySelector(
         "#todayStatCopy"
     ).textContent =
         today.length
-            ? `${today.length === 1
-                ? "One deadline"
-                : `${today.length} deadlines`
-              } to move forward.`
+            ? `${
+                today.length === 1
+                    ? "One deadline"
+                    : `${today.length} deadlines`
+            } to move forward.`
             : "A clear calendar.";
 
     document.querySelector(
@@ -713,11 +934,17 @@ function renderOverview() {
     ).textContent =
         next
             ? (
-                dayDifference(next.date) === 0
+                dayDifference(
+                    next.date
+                ) === 0
                     ? "Today"
-                    : dayDifference(next.date) === 1
+                    : dayDifference(
+                        next.date
+                    ) === 1
                         ? "Tomorrow"
-                        : `${dayDifference(next.date)}d`
+                        : `${dayDifference(
+                            next.date
+                        )}d`
             )
             : "—";
 
@@ -737,7 +964,11 @@ function renderOverview() {
         "#doneStatCopy"
     ).textContent =
         completed
-            ? `${completed} deadline${completed === 1 ? "" : "s"} complete`
+            ? `${completed} deadline${
+                completed === 1
+                    ? ""
+                    : "s"
+            } complete`
             : "Keep the momentum going";
 
     document.querySelector(
@@ -745,7 +976,11 @@ function renderOverview() {
     ).textContent =
         late.length
             ? `${late.length} overdue`
-            : `${open.length} deadline${open.length === 1 ? "" : "s"}`;
+            : `${open.length} deadline${
+                open.length === 1
+                    ? ""
+                    : "s"
+            }`;
 
     document.querySelector(
         "#focusCopy"
@@ -767,7 +1002,9 @@ function renderOverview() {
 // DIALOG
 // =========================
 
-function openTaskDialog(task = null) {
+function openTaskDialog(
+    task = null
+) {
     state.editingId =
         task?.id || null;
 
@@ -811,7 +1048,8 @@ function openTaskDialog(task = null) {
     el.dialog.showModal();
 
     setTimeout(
-        () => el.title.focus(),
+        () =>
+            el.title.focus(),
         20
     );
 }
@@ -874,7 +1112,9 @@ async function removeTask(id) {
 
     if (
         !task ||
-        !confirm(`Remove “${task.title}”?`)
+        !confirm(
+            `Remove “${task.title}”?`
+        )
     ) {
         return;
     }
@@ -931,7 +1171,8 @@ document.querySelector(
     "#newTaskButton"
 ).addEventListener(
     "click",
-    () => openTaskDialog()
+    () =>
+        openTaskDialog()
 );
 
 
@@ -939,7 +1180,8 @@ document.querySelector(
     "#emptyAddButton"
 ).addEventListener(
     "click",
-    () => openTaskDialog()
+    () =>
+        openTaskDialog()
 );
 
 
@@ -966,6 +1208,7 @@ document
             button.addEventListener(
                 "click",
                 () => {
+
                     state.filter =
                         button.dataset.filter;
 
@@ -978,6 +1221,7 @@ document
 el.search.addEventListener(
     "input",
     () => {
+
         state.search =
             el.search.value;
 
@@ -989,6 +1233,7 @@ el.search.addEventListener(
 el.sortButton.addEventListener(
     "click",
     () => {
+
         el.sortMenu.hidden =
             !el.sortMenu.hidden;
     }
@@ -998,6 +1243,7 @@ el.sortButton.addEventListener(
 el.sortMenu.addEventListener(
     "click",
     (event) => {
+
         const button =
             event.target.closest(
                 "button[data-sort]"
@@ -1016,7 +1262,9 @@ el.sortMenu.addEventListener(
             button.textContent;
 
         el.sortMenu
-            .querySelectorAll("button")
+            .querySelectorAll(
+                "button"
+            )
             .forEach(
                 (item) =>
                     item.classList.toggle(
@@ -1036,6 +1284,7 @@ el.sortMenu.addEventListener(
 document.addEventListener(
     "click",
     (event) => {
+
         if (
             !event.target.closest(
                 ".list-toolbar"
@@ -1060,6 +1309,7 @@ document.addEventListener(
                 "INPUT"
         ) {
             event.preventDefault();
+
             el.search.focus();
         }
 
@@ -1075,6 +1325,7 @@ document.addEventListener(
             )
         ) {
             event.preventDefault();
+
             openTaskDialog();
         }
 
@@ -1095,6 +1346,7 @@ document.addEventListener(
 el.form.addEventListener(
     "submit",
     async (event) => {
+
         event.preventDefault();
 
         if (!el.form.reportValidity()) {
@@ -1102,6 +1354,7 @@ el.form.addEventListener(
         }
 
         const details = {
+
             title:
                 el.title.value.trim(),
 
@@ -1144,12 +1397,16 @@ el.form.addEventListener(
         el.saveIcon.textContent = "…";
 
         try {
+
             if (state.editingId) {
+
                 const task =
                     state.tasks.find(
                         (item) =>
                             String(item.id) ===
-                            String(state.editingId)
+                            String(
+                                state.editingId
+                            )
                     );
 
                 if (!task) {
@@ -1161,10 +1418,16 @@ el.form.addEventListener(
                     details,
                     task.completed
                 );
+
             } else {
-                await createTask(details);
+
+                await createTask(
+                    details
+                );
             }
+
         } finally {
+
             submitButton.disabled = false;
 
             el.saveText.textContent =
@@ -1178,7 +1441,504 @@ el.form.addEventListener(
 
 
 // =========================
+// AUTH UI
+// =========================
+
+const authScreen =
+    document.querySelector(
+        "#authScreen"
+    );
+
+const appShell =
+    document.querySelector(
+        "#appShell"
+    );
+
+const loginForm =
+    document.querySelector(
+        "#loginForm"
+    );
+
+const registerForm =
+    document.querySelector(
+        "#registerForm"
+    );
+
+const loginEmail =
+    document.querySelector(
+        "#loginEmail"
+    );
+
+const loginPassword =
+    document.querySelector(
+        "#loginPassword"
+    );
+
+const registerName =
+    document.querySelector(
+        "#registerName"
+    );
+
+const registerEmail =
+    document.querySelector(
+        "#registerEmail"
+    );
+
+const registerPassword =
+    document.querySelector(
+        "#registerPassword"
+    );
+
+const loginError =
+    document.querySelector(
+        "#loginError"
+    );
+
+const registerError =
+    document.querySelector(
+        "#registerError"
+    );
+
+const loginButtonText =
+    document.querySelector(
+        "#loginButtonText"
+    );
+
+const registerButtonText =
+    document.querySelector(
+        "#registerButtonText"
+    );
+
+const showRegisterButton =
+    document.querySelector(
+        "#showRegister"
+    );
+
+const showLoginButton =
+    document.querySelector(
+        "#showLogin"
+    );
+
+const accountButton =
+    document.querySelector(
+        "#accountButton"
+    );
+
+const accountMenu =
+    document.querySelector(
+        "#accountMenu"
+    );
+
+const accountName =
+    document.querySelector(
+        "#accountName"
+    );
+
+const accountEmail =
+    document.querySelector(
+        "#accountEmail"
+    );
+
+const logoutButton =
+    document.querySelector(
+        "#logoutButton"
+    );
+
+
+function showLogin() {
+
+    loginForm.hidden = false;
+
+    registerForm.hidden = true;
+
+    loginError.textContent = "";
+
+    registerError.textContent = "";
+
+    document.querySelector(
+        "#authEyebrow"
+    ).textContent =
+        "WELCOME BACK";
+
+    document.querySelector(
+        "#authTitle"
+    ).textContent =
+        "Sign in to Due Today";
+
+    document.querySelector(
+        "#authSubtitle"
+    ).textContent =
+        "Keep your deadlines organized and available wherever you go.";
+}
+
+
+function showRegister() {
+
+    loginForm.hidden = true;
+
+    registerForm.hidden = false;
+
+    loginError.textContent = "";
+
+    registerError.textContent = "";
+
+    document.querySelector(
+        "#authEyebrow"
+    ).textContent =
+        "GET STARTED";
+
+    document.querySelector(
+        "#authTitle"
+    ).textContent =
+        "Create your account";
+
+    document.querySelector(
+        "#authSubtitle"
+    ).textContent =
+        "Create an account and keep your deadlines synced securely.";
+}
+
+
+function showApp() {
+
+    authScreen.hidden = true;
+
+    appShell.hidden = false;
+
+    if (currentUser) {
+
+        accountName.textContent =
+            currentUser.name ||
+            "User";
+
+        accountEmail.textContent =
+            currentUser.email ||
+            "";
+
+        const initials =
+            (
+                currentUser.name ||
+                "U"
+            )
+                .trim()
+                .split(/\s+/)
+                .map(
+                    (part) =>
+                        part[0]
+                )
+                .join("")
+                .slice(0, 2)
+                .toUpperCase();
+
+        accountButton.textContent =
+            initials || "U";
+    }
+
+    getTasks();
+}
+
+
+function showAuth() {
+
+    authScreen.hidden = false;
+
+    appShell.hidden = true;
+
+    showLogin();
+}
+
+
+// =========================
+// LOGIN
+// =========================
+
+loginForm.addEventListener(
+    "submit",
+    async (event) => {
+
+        event.preventDefault();
+
+        loginError.textContent = "";
+
+        const submitButton =
+            loginForm.querySelector(
+                'button[type="submit"]'
+            );
+
+        submitButton.disabled = true;
+
+        loginButtonText.textContent =
+            "Signing in...";
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_BASE}/auth/login`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            email:
+                                loginEmail.value.trim(),
+
+                            password:
+                                loginPassword.value
+                        })
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.error ||
+                    "Login failed."
+                );
+            }
+
+            saveAuth(
+                data.token,
+                data.user
+            );
+
+            loginForm.reset();
+
+            showApp();
+
+        } catch (error) {
+
+            console.error(
+                "Login error:",
+                error
+            );
+
+            loginError.textContent =
+                error.message ||
+                "Could not sign in.";
+
+        } finally {
+
+            submitButton.disabled =
+                false;
+
+            loginButtonText.textContent =
+                "Sign in";
+        }
+    }
+);
+
+
+// =========================
+// REGISTER
+// =========================
+
+registerForm.addEventListener(
+    "submit",
+    async (event) => {
+
+        event.preventDefault();
+
+        registerError.textContent = "";
+
+        const submitButton =
+            registerForm.querySelector(
+                'button[type="submit"]'
+            );
+
+        submitButton.disabled = true;
+
+        registerButtonText.textContent =
+            "Creating account...";
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_BASE}/auth/register`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            name:
+                                registerName.value.trim(),
+
+                            email:
+                                registerEmail.value.trim(),
+
+                            password:
+                                registerPassword.value
+                        })
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.error ||
+                    "Registration failed."
+                );
+            }
+
+            saveAuth(
+                data.token,
+                data.user
+            );
+
+            registerForm.reset();
+
+            showApp();
+
+        } catch (error) {
+
+            console.error(
+                "Registration error:",
+                error
+            );
+
+            registerError.textContent =
+                error.message ||
+                "Could not create account.";
+
+        } finally {
+
+            submitButton.disabled =
+                false;
+
+            registerButtonText.textContent =
+                "Create account";
+        }
+    }
+);
+
+
+// =========================
+// AUTH SWITCH
+// =========================
+
+showRegisterButton.addEventListener(
+    "click",
+    showRegister
+);
+
+showLoginButton.addEventListener(
+    "click",
+    showLogin
+);
+
+
+// =========================
+// ACCOUNT MENU
+// =========================
+
+accountButton.addEventListener(
+    "click",
+    (event) => {
+
+        event.stopPropagation();
+
+        accountMenu.hidden =
+            !accountMenu.hidden;
+    }
+);
+
+
+document.addEventListener(
+    "click",
+    (event) => {
+
+        if (
+            !event.target.closest(
+                ".account-area"
+            )
+        ) {
+            accountMenu.hidden = true;
+        }
+    }
+);
+
+
+// =========================
+// LOGOUT
+// =========================
+
+logoutButton.addEventListener(
+    "click",
+    () => {
+
+        clearAuth();
+
+        state.tasks = [];
+
+        state.filter = "all";
+
+        state.search = "";
+
+        accountMenu.hidden = true;
+
+        showAuth();
+    }
+);
+
+
+// =========================
+// AUTH RESPONSE HANDLING
+// =========================
+
+async function handleAuthResponse(
+    response
+) {
+
+    if (response.status === 401) {
+
+        clearAuth();
+
+        state.tasks = [];
+
+        showAuth();
+
+        throw new Error(
+            "Your session has expired. Please sign in again."
+        );
+    }
+
+    return response;
+}
+
+
+// =========================
 // INITIAL LOAD
 // =========================
 
-getTasks();
+function initializeApp() {
+
+    if (
+        getAuthToken() &&
+        currentUser
+    ) {
+
+        showApp();
+
+    } else {
+
+        showAuth();
+    }
+}
+
+
+initializeApp();
