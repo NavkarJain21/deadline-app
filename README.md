@@ -1,7 +1,4 @@
 # Due Today
-
-A small, browser-based deadline tracker. Open `index.html` in any modern browser—no installation or account is required.
-
 Features include:
 
 - Create, edit, complete, and remove deadlines
